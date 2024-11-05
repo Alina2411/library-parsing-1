@@ -2,6 +2,7 @@ from pathvalidate import sanitize_filename
 from urllib.parse import urlsplit
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
+from time import sleep
 import requests
 import argparse
 import os
@@ -33,8 +34,6 @@ def download_txt(url, filename, folder="books/"):
         file.write(response.content)
 
 
-
-
 def parse_book_page(response, book_url):
     soup = BeautifulSoup(response.text, 'lxml')
     book_image_url = soup.find('div', class_='bookimage').find('img')['src']
@@ -53,6 +52,7 @@ def parse_book_page(response, book_url):
         "comments": comments
     }
     return book_parameters
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -74,6 +74,10 @@ def main():
             download_txt(url, filename)
         except requests.exceptions.HTTPError:
             print("Книга не найдена")
+        except requests.exceptions.ConnectionError:
+            print("Не удалось подключится к серверу")
+            sleep(20)
+
 
 if __name__ == "__main__":
     main()

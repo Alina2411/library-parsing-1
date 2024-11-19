@@ -24,9 +24,12 @@ def download_image(url, folder="image_books/"):
         file.write(response.content)
 
 
-def download_txt(url, filename, folder="books/"):
+def download_txt(url, number, filename, folder="books/"):
     os.makedirs(folder, exist_ok=True)
-    response = requests.get(url)
+    params = {
+        'id': number
+    }
+    response = requests.get(url, params=params)
     response.raise_for_status() 
     check_for_redirect(response)
     filepath = os.path.join(folder, sanitize_filename(filename))
@@ -39,15 +42,15 @@ def parse_book_page(response, book_url):
     book_image_url = soup.find('div', class_='bookimage').find('img')['src']
     book_text = soup.find_all('div', class_='texts')
     comments = [comment.find('span', class_='black').text for comment in book_text]
-    book_genres =  soup.find('span', class_='d_book').find_all('a')
+    books_genres =  soup.find('span', class_='d_book').find_all('a')
     title = soup.find('h1').text
     title_book, book_author  = title.split(' :: ')
-    genre_book = [genres.text for genres in book_genres]
+    books_genres = [genre.text for genre in books_genres]
     image_url = urljoin(book_url, book_image_url)
     book_parameters = {
         "title_book": title_book,
         "book_author": book_author,
-        "book_genres": genre_book,
+        "book_genres": books_genres,
         "image_url": image_url,
         "comments": comments
     }
@@ -69,9 +72,9 @@ def main():
             check_for_redirect(response)
             book_parameters = parse_book_page(response, book_url)
             download_image(book_parameters["image_url"])
-            url = f"https://tululu.org/txt.php?id={number}"
+            url = "https://tululu.org/txt.php"
             filename = book_parameters["title_book".strip()].txt
-            download_txt(url, filename)
+            download_txt(url, number, filename)
         except requests.exceptions.HTTPError:
             print("Книга не найдена")
         except requests.exceptions.ConnectionError:
